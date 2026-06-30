@@ -1,0 +1,20 @@
+# Virtual environment — never commit this, recreated via requirements.txt instead
+droplet_env/
+
+# Large trained model files — too big for GitHub, recreated by running the notebooks
+models/*.pkl
+models/*.keras
+
+# Raw dataset — keep the cleaned CSV tracked, but not the original heavy .xls
+data/*.xls
+
+# Jupyter checkpoint files — auto-generated clutter
+.ipynb_checkpoints/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# OS-specific files
+.DS_Store
+Thumbs.db
