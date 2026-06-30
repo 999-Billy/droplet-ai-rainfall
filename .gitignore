@@ -1,9 +1,11 @@
 # Virtual environment — never commit this, recreated via requirements.txt instead
 droplet_env/
 
-# Large trained model files — too big for GitHub, recreated by running the notebooks
-models/*.pkl
-models/*.keras
+# LSTM model files specifically excluded — not used in deployment,
+# and the .keras format plus scaler are not needed since LSTM is
+# intentionally not served by the live API
+models/lstm_model.keras
+models/lstm_scaler.pkl
 
 # Raw dataset — keep the cleaned CSV tracked, but not the original heavy .xls
 data/*.xls
