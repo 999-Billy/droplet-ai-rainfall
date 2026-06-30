@@ -3,8 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../widgets/rain_gauge_hero.dart';
-
-const String apiBaseUrl = "http://127.0.0.1:8000";
+import '../config.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

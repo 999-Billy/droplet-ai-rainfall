@@ -3,8 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../widgets/rain_gauge_hero.dart';
-
-const String apiBaseUrl = "http://127.0.0.1:8000";
+import '../config.dart';
 
 const Map<int, String> monthNames = {
   1: "January",
@@ -165,7 +164,6 @@ class _PredictScreenState extends State<PredictScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // Month dropdown — full names only, never numeric
             Row(
               children: [
                 Icon(
@@ -203,7 +201,6 @@ class _PredictScreenState extends State<PredictScreen> {
               ],
             ),
             const Divider(height: 24),
-            // Year stepper — tap arrows, never free typing
             Row(
               children: [
                 Icon(Icons.event, size: 18, color: theme.colorScheme.primary),

@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
-const String apiBaseUrl = "http://127.0.0.1:8000";
+import '../config.dart';
 
 const Map<int, String> monthNamesCompare = {
   1: "January",
@@ -20,9 +19,6 @@ const Map<int, String> monthNamesCompare = {
   12: "December",
 };
 
-// LSTM intentionally excluded — trained and evaluated in the project's
-// notebooks, but not served by the live deployed API due to hosting
-// memory constraints (see About screen for details).
 const List<String> modelOrder = ["sarima", "gam", "xgboost"];
 const Map<String, String> modelDisplayNames = {
   "sarima": "SARIMA",
