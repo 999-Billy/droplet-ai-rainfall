@@ -76,9 +76,7 @@ class _PredictScreenState extends State<PredictScreen> {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"year": _selectedYear, "month": _selectedMonth}),
       );
-
       _slowLoadTimer?.cancel();
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data.containsKey("error")) {
@@ -111,7 +109,6 @@ class _PredictScreenState extends State<PredictScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -127,7 +124,7 @@ class _PredictScreenState extends State<PredictScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            "Choose a month and year to get a SARIMA forecast for Tarkwa",
+            "Select a month and year to get a GBR rainfall forecast for Tarkwa",
             style: GoogleFonts.manrope(
               fontSize: 13,
               color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
@@ -177,13 +174,24 @@ class _PredictScreenState extends State<PredictScreen> {
           ],
           const SizedBox(height: 24),
           if (_errorMessage != null) _buildErrorCard(theme),
-          if (_result != null)
+          if (_result != null) ...[
             RainGaugeHero(
-              monthName: _result!["month_name"],
-              year: _result!["year"],
-              mm: (_result!["predicted_rainfall_mm"] as num).toDouble(),
-              category: _result!["category"],
+              monthName: _result!["month_name"] as String? ?? "",
+              year: (_result!["year"] as num?)?.toInt() ?? 0,
+              mm:
+                  (_result!["predicted_rainfall_mm"] as num?)?.toDouble() ??
+                  0.0,
+              category: _result!["category"] as String? ?? "",
+              probabilityPct:
+                  (_result!["rainfall_probability_pct"] as num?)?.toDouble() ??
+                  0.0,
+              advisory: _result!["advisory"] as String? ?? "",
             ),
+            const SizedBox(height: 16),
+            _buildHistoricalRangeCard(theme),
+            const SizedBox(height: 16),
+            _buildClimateStrip(theme),
+          ],
         ],
       ),
     );
@@ -224,9 +232,7 @@ class _PredictScreenState extends State<PredictScreen> {
                     );
                   }).toList(),
                   onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _selectedMonth = value);
-                    }
+                    if (value != null) setState(() => _selectedMonth = value);
                   },
                 ),
               ],
@@ -291,6 +297,225 @@ class _PredictScreenState extends State<PredictScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildHistoricalRangeCard(ThemeData theme) {
+    final min = (_result!["historical_min_mm"] as num?)?.toDouble() ?? 0.0;
+    final avg = (_result!["historical_avg_mm"] as num?)?.toDouble() ?? 0.0;
+    final max = (_result!["historical_max_mm"] as num?)?.toDouble() ?? 1.0;
+    final predicted =
+        (_result!["predicted_rainfall_mm"] as num?)?.toDouble() ?? 0.0;
+    final predRatio = max > 0 ? (predicted / max).clamp(0.0, 1.0) : 0.0;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Historical Range — ${_result!["month_name"] ?? ""}",
+              style: GoogleFonts.manrope(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              "Based on 1990–2026 NASA POWER observations",
+              style: GoogleFonts.manrope(
+                fontSize: 11,
+                color: theme.textTheme.bodySmall?.color?.withValues(
+                  alpha: 0.55,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Stack(
+              children: [
+                Container(
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                FractionallySizedBox(
+                  widthFactor: predRatio,
+                  child: Container(
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Min: ${min.toStringAsFixed(1)}mm",
+                  style: GoogleFonts.manrope(
+                    fontSize: 11,
+                    color: theme.textTheme.bodySmall?.color?.withValues(
+                      alpha: 0.6,
+                    ),
+                  ),
+                ),
+                Text(
+                  "Avg: ${avg.toStringAsFixed(1)}mm",
+                  style: GoogleFonts.manrope(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  "Max: ${max.toStringAsFixed(1)}mm",
+                  style: GoogleFonts.manrope(
+                    fontSize: 11,
+                    color: theme.textTheme.bodySmall?.color?.withValues(
+                      alpha: 0.6,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Climate inputs shown as a single unified divided strip —
+  // same visual language as the Home screen's stat strip
+  Widget _buildClimateStrip(ThemeData theme) {
+    final climate = _result!["climate_inputs"] as Map<String, dynamic>? ?? {};
+    final dividerColor =
+        theme.textTheme.bodySmall?.color?.withValues(alpha: 0.12) ??
+        Colors.grey.withValues(alpha: 0.12);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 12, bottom: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Climate Inputs Used",
+                    style: GoogleFonts.manrope(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    "Historical averages for ${_result!["month_name"] ?? ""} — NASA POWER (1990–2026)",
+                    style: GoogleFonts.manrope(
+                      fontSize: 10,
+                      color: theme.textTheme.bodySmall?.color?.withValues(
+                        alpha: 0.55,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // First row: humidity, avg temp, max temp
+            Row(
+              children: [
+                Expanded(
+                  child: _climateColumn(
+                    theme,
+                    "${climate["humidity_pct"] ?? '--'}%",
+                    "Humidity",
+                  ),
+                ),
+                Container(width: 1, height: 40, color: dividerColor),
+                Expanded(
+                  child: _climateColumn(
+                    theme,
+                    "${climate["temp_mean_C"] ?? '--'}°C",
+                    "Avg Temp",
+                  ),
+                ),
+                Container(width: 1, height: 40, color: dividerColor),
+                Expanded(
+                  child: _climateColumn(
+                    theme,
+                    "${climate["temp_max_C"] ?? '--'}°C",
+                    "Max Temp",
+                  ),
+                ),
+              ],
+            ),
+            Divider(height: 16, color: dividerColor),
+            // Second row: min temp, pressure, wind
+            Row(
+              children: [
+                Expanded(
+                  child: _climateColumn(
+                    theme,
+                    "${climate["temp_min_C"] ?? '--'}°C",
+                    "Min Temp",
+                  ),
+                ),
+                Container(width: 1, height: 40, color: dividerColor),
+                Expanded(
+                  child: _climateColumn(
+                    theme,
+                    "${climate["pressure_kPa"] ?? '--'} kPa",
+                    "Pressure",
+                  ),
+                ),
+                Container(width: 1, height: 40, color: dividerColor),
+                Expanded(
+                  child: _climateColumn(
+                    theme,
+                    "${climate["wind_speed_ms"] ?? '--'} m/s",
+                    "Wind",
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _climateColumn(ThemeData theme, String value, String label) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.manrope(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: theme.textTheme.titleMedium?.color,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.manrope(
+            fontSize: 10,
+            letterSpacing: 0.3,
+            color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.55),
+          ),
+        ),
+      ],
     );
   }
 }

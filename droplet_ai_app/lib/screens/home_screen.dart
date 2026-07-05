@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
+import 'package:fl_chart/fl_chart.dart';
 import '../widgets/rain_gauge_hero.dart';
 import '../config.dart';
 
@@ -15,6 +16,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   Map<String, dynamic>? _prediction;
+  List<dynamic>? _seasonalProfile;
   bool _isLoading = true;
   bool _showSlowLoadMessage = false;
   String? _errorMessage;
@@ -23,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchNextMonthPrediction();
+    _loadData();
   }
 
   @override
@@ -32,16 +34,15 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  Future<void> _fetchNextMonthPrediction() async {
+  Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
       _showSlowLoadMessage = false;
       _errorMessage = null;
+      _prediction = null;
+      _seasonalProfile = null;
     });
 
-    // If loading takes more than 4 seconds, the backend was likely asleep
-    // (Render's free tier spins down after 15 minutes of inactivity) —
-    // show a clarifying message rather than leaving the user guessing.
     _slowLoadTimer?.cancel();
     _slowLoadTimer = Timer(const Duration(seconds: 4), () {
       if (mounted && _isLoading) {
@@ -58,30 +59,36 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     try {
-      final response = await http.post(
-        Uri.parse("$apiBaseUrl/predict"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"year": targetYear, "month": targetMonth}),
-      );
+      final results = await Future.wait([
+        http.post(
+          Uri.parse("$apiBaseUrl/predict"),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({"year": targetYear, "month": targetMonth}),
+        ),
+        http.get(Uri.parse("$apiBaseUrl/seasonal")),
+      ]);
 
       _slowLoadTimer?.cancel();
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data.containsKey("error")) {
+      if (results[0].statusCode == 200) {
+        final predData = jsonDecode(results[0].body);
+        final seasonalData = jsonDecode(results[1].body);
+
+        if (predData.containsKey("error")) {
           setState(() {
-            _errorMessage = data["error"];
+            _errorMessage = predData["error"];
             _isLoading = false;
           });
         } else {
           setState(() {
-            _prediction = data;
+            _prediction = predData;
+            _seasonalProfile = seasonalData["profile"] as List<dynamic>;
             _isLoading = false;
           });
         }
       } else {
         setState(() {
-          _errorMessage = "Server returned status ${response.statusCode}";
+          _errorMessage = "Server returned status ${results[0].statusCode}";
           _isLoading = false;
         });
       }
@@ -107,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
         : "Good evening";
 
     return RefreshIndicator(
-      onRefresh: _fetchNextMonthPrediction,
+      onRefresh: _loadData,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(20),
@@ -144,15 +151,28 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 24),
             if (_isLoading) _buildLoadingCard(theme),
             if (!_isLoading && _errorMessage != null) _buildErrorCard(theme),
-            if (!_isLoading && _prediction != null)
+            if (!_isLoading &&
+                _prediction != null &&
+                _seasonalProfile != null) ...[
               RainGaugeHero(
-                monthName: _prediction!["month_name"],
-                year: _prediction!["year"],
-                mm: (_prediction!["predicted_rainfall_mm"] as num).toDouble(),
-                category: _prediction!["category"],
+                monthName: _prediction!["month_name"] as String? ?? "",
+                year: (_prediction!["year"] as num?)?.toInt() ?? 0,
+                mm:
+                    (_prediction!["predicted_rainfall_mm"] as num?)
+                        ?.toDouble() ??
+                    0.0,
+                category: _prediction!["category"] as String? ?? "",
+                probabilityPct:
+                    (_prediction!["rainfall_probability_pct"] as num?)
+                        ?.toDouble() ??
+                    0.0,
+                advisory: _prediction!["advisory"] as String? ?? "",
               ),
-            const SizedBox(height: 16),
-            if (!_isLoading && _prediction != null) _buildStatStrip(theme),
+              const SizedBox(height: 16),
+              _buildStatStrip(theme),
+              const SizedBox(height: 16),
+              _buildSeasonalChart(theme),
+            ],
           ],
         ),
       ),
@@ -200,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _fetchNextMonthPrediction,
+              onPressed: _loadData,
               child: const Text("Try Again"),
             ),
           ],
@@ -210,9 +230,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStatStrip(ThemeData theme) {
-    final historicalAvg = _prediction!["historical_average_mm"];
-    final percentVsAvg = _prediction!["percent_vs_average"];
-    final isAboveAverage = percentVsAvg >= 0;
+    final historicalAvg = _prediction!["historical_avg_mm"];
+    final historicalMin = _prediction!["historical_min_mm"];
+    final historicalMax = _prediction!["historical_max_mm"];
     final dividerColor =
         theme.textTheme.bodySmall?.color?.withValues(alpha: 0.12) ??
         Colors.grey.withValues(alpha: 0.12);
@@ -225,35 +245,37 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: _statColumn(
                 theme,
-                "${_prediction!["predicted_rainfall_mm"]}",
+                "${historicalAvg ?? '--'}",
                 "mm",
-                "Predicted",
+                "Avg",
               ),
             ),
             Container(width: 1, height: 40, color: dividerColor),
             Expanded(
               child: _statColumn(
                 theme,
-                "$historicalAvg",
+                "${historicalMin ?? '--'}",
                 "mm",
-                "Historical Avg",
+                "Min",
               ),
             ),
             Container(width: 1, height: 40, color: dividerColor),
             Expanded(
               child: _statColumn(
                 theme,
-                "${isAboveAverage ? '+' : ''}$percentVsAvg",
-                "%",
-                "vs Average",
-                valueColor: isAboveAverage
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.error,
+                "${historicalMax ?? '--'}",
+                "mm",
+                "Max",
               ),
             ),
             Container(width: 1, height: 40, color: dividerColor),
             Expanded(
-              child: _statColumn(theme, _prediction!["category"], "", "Level"),
+              child: _statColumn(
+                theme,
+                _prediction!["category"] as String? ?? "--",
+                "",
+                "Level",
+              ),
             ),
           ],
         ),
@@ -277,7 +299,7 @@ class _HomeScreenState extends State<HomeScreen> {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: GoogleFonts.manrope(
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.w700,
             color: valueColor ?? theme.textTheme.titleMedium?.color,
           ),
@@ -293,6 +315,193 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSeasonalChart(ThemeData theme) {
+    final profile = _seasonalProfile!;
+    if (profile.isEmpty) return const SizedBox.shrink();
+
+    final maxVal = profile
+        .map((e) => (e["avg_rainfall_mm"] as num?)?.toDouble() ?? 0.0)
+        .reduce((a, b) => a > b ? a : b);
+
+    final currentMonth = () {
+      int m = DateTime.now().month + 1;
+      return m > 12 ? 1 : m;
+    }();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Annual Rainfall Pattern",
+              style: GoogleFonts.manrope(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              "Historical monthly averages — Tarkwa (1990–2026)",
+              style: GoogleFonts.manrope(
+                fontSize: 11,
+                color: theme.textTheme.bodySmall?.color?.withValues(
+                  alpha: 0.55,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 140,
+              child: BarChart(
+                BarChartData(
+                  alignment: BarChartAlignment.spaceAround,
+                  maxY: maxVal * 1.2,
+                  barTouchData: BarTouchData(
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                        final entry = profile[groupIndex];
+                        return BarTooltipItem(
+                          "${entry["month_name"]}\n${rod.toY.toStringAsFixed(0)}mm",
+                          GoogleFonts.manrope(
+                            fontSize: 11,
+                            color: Colors.white,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  titlesData: FlTitlesData(
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          const labels = [
+                            'J',
+                            'F',
+                            'M',
+                            'A',
+                            'M',
+                            'J',
+                            'J',
+                            'A',
+                            'S',
+                            'O',
+                            'N',
+                            'D',
+                          ];
+                          final idx = value.toInt();
+                          if (idx < 0 || idx >= labels.length)
+                            return const SizedBox.shrink();
+                          return Text(
+                            labels[idx],
+                            style: GoogleFonts.manrope(
+                              fontSize: 10,
+                              fontWeight: idx + 1 == currentMonth
+                                  ? FontWeight.w700
+                                  : FontWeight.w400,
+                              color: idx + 1 == currentMonth
+                                  ? theme.colorScheme.primary
+                                  : theme.textTheme.bodySmall?.color
+                                        ?.withValues(alpha: 0.6),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                  ),
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    getDrawingHorizontalLine: (value) => FlLine(
+                      color: theme.dividerColor.withValues(alpha: 0.3),
+                      strokeWidth: 1,
+                    ),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  barGroups: List.generate(profile.length, (i) {
+                    final val =
+                        (profile[i]["avg_rainfall_mm"] as num?)?.toDouble() ??
+                        0.0;
+                    final isHighlighted = i + 1 == currentMonth;
+                    return BarChartGroupData(
+                      x: i,
+                      barRods: [
+                        BarChartRodData(
+                          toY: val,
+                          color: isHighlighted
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.primary.withValues(
+                                  alpha: 0.35,
+                                ),
+                          width: 14,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(4),
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  "Upcoming month",
+                  style: GoogleFonts.manrope(
+                    fontSize: 10,
+                    color: theme.textTheme.bodySmall?.color?.withValues(
+                      alpha: 0.6,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  "Other months",
+                  style: GoogleFonts.manrope(
+                    fontSize: 10,
+                    color: theme.textTheme.bodySmall?.color?.withValues(
+                      alpha: 0.6,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

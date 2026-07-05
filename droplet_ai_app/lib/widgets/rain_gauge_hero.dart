@@ -1,21 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// The historical rainfall range observed in the Tarkwa dataset (1996-2019),
-// used to scale the gauge fill proportionally — shared by every screen
-// that shows a gauge, so the scale stays consistent app-wide.
-const double historicalMinMm = 0.6;
-const double historicalMaxMm = 525.9;
+const double historicalMinMm = 0.0;
+const double historicalMaxMm = 574.0;
 
-// Reusable hero widget: a rain gauge + headline number + category pill.
-// Used on the Home screen (next month) and the Predict screen (any
-// user-chosen month), so both feel like the same instrument, not two
-// different designs bolted together.
 class RainGaugeHero extends StatelessWidget {
   final String monthName;
   final int year;
   final double mm;
   final String category;
+  final double probabilityPct;
+  final String advisory;
 
   const RainGaugeHero({
     super.key,
@@ -23,6 +18,8 @@ class RainGaugeHero extends StatelessWidget {
     required this.year,
     required this.mm,
     required this.category,
+    required this.probabilityPct,
+    required this.advisory,
   });
 
   @override
@@ -37,78 +34,119 @@ class RainGaugeHero extends StatelessWidget {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: 56,
-              height: 140,
-              child: CustomPaint(
-                painter: RainGaugePainter(
-                  fillRatio: fillRatio,
-                  fillColor: theme.colorScheme.primary,
-                  trackColor: theme.colorScheme.primary.withValues(alpha: 0.12),
-                ),
+            // Month/year label
+            Text(
+              "$monthName $year",
+              style: GoogleFonts.manrope(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
               ),
             ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "$monthName $year",
-                    style: GoogleFonts.manrope(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                      color: theme.textTheme.bodySmall?.color?.withValues(
-                        alpha: 0.6,
+            const SizedBox(height: 16),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Gauge
+                SizedBox(
+                  width: 52,
+                  height: 130,
+                  child: CustomPaint(
+                    painter: RainGaugePainter(
+                      fillRatio: fillRatio,
+                      fillColor: theme.colorScheme.primary,
+                      trackColor: theme.colorScheme.primary.withValues(
+                        alpha: 0.12,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Probability percentage — the headline number
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            "${probabilityPct.toStringAsFixed(0)}%",
+                            style: GoogleFonts.fraunces(
+                              fontSize: 48,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.primary,
+                              height: 1.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // mm value beneath the percentage
                       Text(
-                        mm.toStringAsFixed(1),
-                        style: GoogleFonts.fraunces(
-                          fontSize: 40,
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.primary,
-                          height: 1.0,
+                        "${mm.toStringAsFixed(1)} mm expected",
+                        style: GoogleFonts.manrope(
+                          fontSize: 13,
+                          color: theme.textTheme.bodyMedium?.color?.withValues(
+                            alpha: 0.65,
+                          ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 6, left: 4),
+                      const SizedBox(height: 10),
+                      // Category pill
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                         child: Text(
-                          "mm",
+                          category,
                           style: GoogleFonts.manrope(
-                            fontSize: 15,
-                            color: theme.textTheme.bodyMedium?.color
-                                ?.withValues(alpha: 0.7),
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Advisory text — full width beneath the gauge row
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
                     child: Text(
-                      category,
+                      advisory,
                       style: GoogleFonts.manrope(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
+                        fontSize: 12,
+                        height: 1.5,
+                        color: theme.textTheme.bodyMedium?.color?.withValues(
+                          alpha: 0.8,
+                        ),
                       ),
                     ),
                   ),
@@ -122,8 +160,6 @@ class RainGaugeHero extends StatelessWidget {
   }
 }
 
-// The gauge visual itself — a rounded capsule that fills from the bottom
-// proportional to fillRatio, with a midpoint tick mark for reference.
 class RainGaugePainter extends CustomPainter {
   final double fillRatio;
   final Color fillColor;
@@ -169,11 +205,7 @@ class RainGaugePainter extends CustomPainter {
       ..color = trackColor.withValues(alpha: 0.8)
       ..strokeWidth = 1.5;
     final midY = size.height / 2;
-    canvas.drawLine(
-      Offset(0, midY),
-      Offset(size.width * 0.25, midY),
-      tickPaint,
-    );
+    canvas.drawLine(Offset(0, midY), Offset(size.width * 0.3, midY), tickPaint);
   }
 
   @override
