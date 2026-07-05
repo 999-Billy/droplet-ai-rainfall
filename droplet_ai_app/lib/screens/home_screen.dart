@@ -60,12 +60,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final results = await Future.wait([
-        http.post(
-          Uri.parse("$apiBaseUrl/predict"),
-          headers: {"Content-Type": "application/json"},
-          body: jsonEncode({"year": targetYear, "month": targetMonth}),
-        ),
-        http.get(Uri.parse("$apiBaseUrl/seasonal")),
+        http
+            .post(
+              Uri.parse("$apiBaseUrl/predict"),
+              headers: {"Content-Type": "application/json"},
+              body: jsonEncode({"year": targetYear, "month": targetMonth}),
+            )
+            .timeout(const Duration(seconds: 90)),
+        http
+            .get(Uri.parse("$apiBaseUrl/seasonal"))
+            .timeout(const Duration(seconds: 90)),
       ]);
 
       _slowLoadTimer?.cancel();
@@ -92,11 +96,18 @@ class _HomeScreenState extends State<HomeScreen> {
           _isLoading = false;
         });
       }
+    } on TimeoutException {
+      _slowLoadTimer?.cancel();
+      setState(() {
+        _errorMessage =
+            "The server is taking too long to respond.\nPlease tap Try Again — it may still be waking up.";
+        _isLoading = false;
+      });
     } catch (e) {
       _slowLoadTimer?.cancel();
       setState(() {
         _errorMessage =
-            "Could not reach the prediction server.\nMake sure the backend is running.";
+            "Could not reach the prediction server.\nPlease check your connection and try again.";
         _isLoading = false;
       });
     }
@@ -394,8 +405,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             'D',
                           ];
                           final idx = value.toInt();
-                          if (idx < 0 || idx >= labels.length)
+                          if (idx < 0 || idx >= labels.length) {
                             return const SizedBox.shrink();
+                          }
                           return Text(
                             labels[idx],
                             style: GoogleFonts.manrope(

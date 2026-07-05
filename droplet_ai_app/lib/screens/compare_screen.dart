@@ -58,7 +58,9 @@ class _CompareScreenState extends State<CompareScreen> {
   void _changeYear(int delta) {
     setState(() {
       final newYear = _selectedYear + delta;
-      if (newYear >= _minYear && newYear <= _maxYear) _selectedYear = newYear;
+      if (newYear >= _minYear && newYear <= _maxYear) {
+        _selectedYear = newYear;
+      }
     });
   }
 
@@ -73,17 +75,26 @@ class _CompareScreenState extends State<CompareScreen> {
 
     _slowLoadTimer?.cancel();
     _slowLoadTimer = Timer(const Duration(seconds: 4), () {
-      if (mounted && _isLoading) setState(() => _showSlowLoadMessage = true);
+      if (mounted && _isLoading) {
+        setState(() => _showSlowLoadMessage = true);
+      }
     });
 
     try {
       final responses = await Future.wait([
-        http.post(
-          Uri.parse("$apiBaseUrl/compare"),
-          headers: {"Content-Type": "application/json"},
-          body: jsonEncode({"year": _selectedYear, "month": _selectedMonth}),
-        ),
-        http.get(Uri.parse("$apiBaseUrl/historical/$_selectedMonth")),
+        http
+            .post(
+              Uri.parse("$apiBaseUrl/compare"),
+              headers: {"Content-Type": "application/json"},
+              body: jsonEncode({
+                "year": _selectedYear,
+                "month": _selectedMonth,
+              }),
+            )
+            .timeout(const Duration(seconds: 90)),
+        http
+            .get(Uri.parse("$apiBaseUrl/historical/$_selectedMonth"))
+            .timeout(const Duration(seconds: 90)),
       ]);
 
       _slowLoadTimer?.cancel();
@@ -102,11 +113,18 @@ class _CompareScreenState extends State<CompareScreen> {
           _isLoading = false;
         });
       }
+    } on TimeoutException {
+      _slowLoadTimer?.cancel();
+      setState(() {
+        _errorMessage =
+            "The server is taking too long to respond.\nPlease tap Compare Again — it may still be waking up.";
+        _isLoading = false;
+      });
     } catch (e) {
       _slowLoadTimer?.cancel();
       setState(() {
         _errorMessage =
-            "Could not reach the prediction server.\nMake sure the backend is running.";
+            "Could not reach the prediction server.\nPlease check your connection and try again.";
         _isLoading = false;
       });
     }
@@ -986,8 +1004,6 @@ class _CompareScreenState extends State<CompareScreen> {
     );
   }
 
-  // Climate inputs as a unified divided stat strip —
-  // same visual language as Home and Predict screens
   Widget _buildClimateStrip(ThemeData theme) {
     final climate = _result!["climate_inputs"] as Map<String, dynamic>? ?? {};
     final dividerColor =
@@ -1024,7 +1040,6 @@ class _CompareScreenState extends State<CompareScreen> {
                 ],
               ),
             ),
-            // Row 1: humidity, avg temp, max temp
             Row(
               children: [
                 Expanded(
@@ -1053,7 +1068,6 @@ class _CompareScreenState extends State<CompareScreen> {
               ],
             ),
             Divider(height: 16, color: dividerColor),
-            // Row 2: min temp, pressure, wind
             Row(
               children: [
                 Expanded(

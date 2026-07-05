@@ -71,12 +71,16 @@ class _PredictScreenState extends State<PredictScreen> {
     });
 
     try {
-      final response = await http.post(
-        Uri.parse("$apiBaseUrl/predict"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"year": _selectedYear, "month": _selectedMonth}),
-      );
+      final response = await http
+          .post(
+            Uri.parse("$apiBaseUrl/predict"),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({"year": _selectedYear, "month": _selectedMonth}),
+          )
+          .timeout(const Duration(seconds: 90));
+
       _slowLoadTimer?.cancel();
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data.containsKey("error")) {
@@ -96,11 +100,18 @@ class _PredictScreenState extends State<PredictScreen> {
           _isLoading = false;
         });
       }
+    } on TimeoutException {
+      _slowLoadTimer?.cancel();
+      setState(() {
+        _errorMessage =
+            "The server is taking too long to respond.\nPlease tap Get Forecast again — it may still be waking up.";
+        _isLoading = false;
+      });
     } catch (e) {
       _slowLoadTimer?.cancel();
       setState(() {
         _errorMessage =
-            "Could not reach the prediction server.\nMake sure the backend is running.";
+            "Could not reach the prediction server.\nPlease check your connection and try again.";
         _isLoading = false;
       });
     }
@@ -232,7 +243,9 @@ class _PredictScreenState extends State<PredictScreen> {
                     );
                   }).toList(),
                   onChanged: (value) {
-                    if (value != null) setState(() => _selectedMonth = value);
+                    if (value != null) {
+                      setState(() => _selectedMonth = value);
+                    }
                   },
                 ),
               ],
@@ -389,8 +402,6 @@ class _PredictScreenState extends State<PredictScreen> {
     );
   }
 
-  // Climate inputs shown as a single unified divided strip —
-  // same visual language as the Home screen's stat strip
   Widget _buildClimateStrip(ThemeData theme) {
     final climate = _result!["climate_inputs"] as Map<String, dynamic>? ?? {};
     final dividerColor =
@@ -427,7 +438,6 @@ class _PredictScreenState extends State<PredictScreen> {
                 ],
               ),
             ),
-            // First row: humidity, avg temp, max temp
             Row(
               children: [
                 Expanded(
@@ -456,7 +466,6 @@ class _PredictScreenState extends State<PredictScreen> {
               ],
             ),
             Divider(height: 16, color: dividerColor),
-            // Second row: min temp, pressure, wind
             Row(
               children: [
                 Expanded(
