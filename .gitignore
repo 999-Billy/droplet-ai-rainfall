@@ -20,3 +20,4 @@ __pycache__/
 # OS-specific files
 .DS_Store
 Thumbs.db
+droplet_ai_app/.firebase/

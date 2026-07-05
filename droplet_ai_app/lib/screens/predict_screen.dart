@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../widgets/rain_gauge_hero.dart';
 import '../config.dart';
@@ -35,7 +36,15 @@ class _PredictScreenState extends State<PredictScreen> {
 
   Map<String, dynamic>? _result;
   bool _isLoading = false;
+  bool _showSlowLoadMessage = false;
   String? _errorMessage;
+  Timer? _slowLoadTimer;
+
+  @override
+  void dispose() {
+    _slowLoadTimer?.cancel();
+    super.dispose();
+  }
 
   void _changeYear(int delta) {
     setState(() {
@@ -49,8 +58,16 @@ class _PredictScreenState extends State<PredictScreen> {
   Future<void> _getForecast() async {
     setState(() {
       _isLoading = true;
+      _showSlowLoadMessage = false;
       _errorMessage = null;
       _result = null;
+    });
+
+    _slowLoadTimer?.cancel();
+    _slowLoadTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted && _isLoading) {
+        setState(() => _showSlowLoadMessage = true);
+      }
     });
 
     try {
@@ -59,6 +76,8 @@ class _PredictScreenState extends State<PredictScreen> {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"year": _selectedYear, "month": _selectedMonth}),
       );
+
+      _slowLoadTimer?.cancel();
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -80,6 +99,7 @@ class _PredictScreenState extends State<PredictScreen> {
         });
       }
     } catch (e) {
+      _slowLoadTimer?.cancel();
       setState(() {
         _errorMessage =
             "Could not reach the prediction server.\nMake sure the backend is running.";
@@ -144,6 +164,17 @@ class _PredictScreenState extends State<PredictScreen> {
                     ),
             ),
           ),
+          if (_isLoading && _showSlowLoadMessage) ...[
+            const SizedBox(height: 10),
+            Text(
+              "Waking up the server — this can take up to a minute\nif it hasn't been used recently.",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.manrope(
+                fontSize: 12,
+                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
           const SizedBox(height: 24),
           if (_errorMessage != null) _buildErrorCard(theme),
           if (_result != null)

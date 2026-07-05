@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../widgets/rain_gauge_hero.dart';
 import '../config.dart';
@@ -15,7 +16,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   Map<String, dynamic>? _prediction;
   bool _isLoading = true;
+  bool _showSlowLoadMessage = false;
   String? _errorMessage;
+  Timer? _slowLoadTimer;
 
   @override
   void initState() {
@@ -23,10 +26,27 @@ class _HomeScreenState extends State<HomeScreen> {
     _fetchNextMonthPrediction();
   }
 
+  @override
+  void dispose() {
+    _slowLoadTimer?.cancel();
+    super.dispose();
+  }
+
   Future<void> _fetchNextMonthPrediction() async {
     setState(() {
       _isLoading = true;
+      _showSlowLoadMessage = false;
       _errorMessage = null;
+    });
+
+    // If loading takes more than 4 seconds, the backend was likely asleep
+    // (Render's free tier spins down after 15 minutes of inactivity) —
+    // show a clarifying message rather than leaving the user guessing.
+    _slowLoadTimer?.cancel();
+    _slowLoadTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted && _isLoading) {
+        setState(() => _showSlowLoadMessage = true);
+      }
     });
 
     final now = DateTime.now();
@@ -43,6 +63,8 @@ class _HomeScreenState extends State<HomeScreen> {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"year": targetYear, "month": targetMonth}),
       );
+
+      _slowLoadTimer?.cancel();
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -64,6 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     } catch (e) {
+      _slowLoadTimer?.cancel();
       setState(() {
         _errorMessage =
             "Could not reach the prediction server.\nMake sure the backend is running.";
@@ -140,8 +163,23 @@ class _HomeScreenState extends State<HomeScreen> {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(40),
-        child: Center(
-          child: CircularProgressIndicator(color: theme.colorScheme.primary),
+        child: Column(
+          children: [
+            CircularProgressIndicator(color: theme.colorScheme.primary),
+            if (_showSlowLoadMessage) ...[
+              const SizedBox(height: 16),
+              Text(
+                "Waking up the server — this can take up to a minute\nif it hasn't been used recently.",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.manrope(
+                  fontSize: 12,
+                  color: theme.textTheme.bodySmall?.color?.withValues(
+                    alpha: 0.6,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );
