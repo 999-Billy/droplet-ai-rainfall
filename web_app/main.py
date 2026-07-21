@@ -1,14 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import joblib
-import numpy as np
+import json
 import pandas as pd
 import os
 
 app = FastAPI(
     title="Droplet AI",
-    description="Rainfall Prediction API for Tarkwa, Ghana — NASA POWER Multi-Variable Dataset"
+    description="Rainfall Forecast API for Tarkwa, Ghana — 2026-2030 Monthly Forecasts (NASA POWER Multi-Variable Dataset)"
 )
 
 app.add_middleware(
@@ -19,39 +18,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-MODELS_DIR = os.path.join(os.path.dirname(__file__), "..", "models")
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
+FORECAST_PATH = os.path.join(os.path.dirname(__file__), "forecasts_2026_2030.json")
 
-print("Loading models...")
-
+print("Loading precomputed 2026-2030 forecasts...")
 try:
-    gbr_model = joblib.load(os.path.join(MODELS_DIR, "nasa_gbr_model.pkl"))
-    print("✓ GBR loaded")
+    with open(FORECAST_PATH) as f:
+        FORECAST_DATA = json.load(f)
+    FORECASTS_BY_KEY = {
+        (entry["year"], entry["month"]): entry for entry in FORECAST_DATA["forecasts"]
+    }
+    print(f"✓ Forecasts loaded ({len(FORECASTS_BY_KEY)} months, {FORECAST_DATA['forecast_start']} to {FORECAST_DATA['forecast_end']})")
 except Exception as e:
-    print(f"✗ GBR failed to load: {e}")
-    gbr_model = None
+    print(f"✗ Forecasts failed to load: {e}")
+    FORECAST_DATA = None
+    FORECASTS_BY_KEY = {}
 
-try:
-    lgbm_model = joblib.load(os.path.join(MODELS_DIR, "nasa_lgbm_model.pkl"))
-    print("✓ LightGBM loaded")
-except Exception as e:
-    print(f"✗ LightGBM failed to load: {e}")
-    lgbm_model = None
-
-try:
-    xgb_model = joblib.load(os.path.join(MODELS_DIR, "nasa_xgboost_model.pkl"))
-    print("✓ XGBoost loaded")
-except Exception as e:
-    print(f"✗ XGBoost failed to load: {e}")
-    xgb_model = None
-
-try:
-    rf_model = joblib.load(os.path.join(MODELS_DIR, "nasa_rf_model.pkl"))
-    print("✓ Random Forest loaded")
-except Exception as e:
-    print(f"✗ Random Forest failed to load: {e}")
-    rf_model = None
-
+print("Loading NASA POWER monthly data (for historical/seasonal endpoints)...")
 try:
     nasa_df = pd.read_csv(
         os.path.join(DATA_DIR, "tarkwa_nasa_monthly.csv"),
@@ -62,7 +45,7 @@ except Exception as e:
     print(f"✗ NASA POWER data failed to load: {e}")
     nasa_df = None
 
-print("Model loading complete.")
+print("Startup complete.")
 
 MONTH_NAMES = {
     1: "January", 2: "February", 3: "March", 4: "April",
@@ -70,60 +53,13 @@ MONTH_NAMES = {
     9: "September", 10: "October", 11: "November", 12: "December"
 }
 
-FEATURE_COLS = [
-    "temp_mean_C", "temp_max_C", "temp_min_C",
-    "humidity_pct", "pressure_kPa", "wind_speed_ms",
-    "month", "year", "lag_1", "lag_2", "lag_3"
-]
-
 # The single highest monthly rainfall ever recorded in the Tarkwa
 # NASA POWER dataset (October 2024: 573.9mm) — used as the denominator
 # for the rainfall intensity percentage shown to users.
 ALL_TIME_MAX_RAINFALL_MM = 573.9
 
-
-def get_monthly_climate_averages(month: int) -> dict:
-    subset = nasa_df[nasa_df["month"] == month]
-    return {
-        "temp_mean_C": float(subset["temp_mean_C"].mean()),
-        "temp_max_C": float(subset["temp_max_C"].mean()),
-        "temp_min_C": float(subset["temp_min_C"].mean()),
-        "humidity_pct": float(subset["humidity_pct"].mean()),
-        "pressure_kPa": float(subset["pressure_kPa"].mean()),
-        "wind_speed_ms": float(subset["wind_speed_ms"].mean()),
-    }
-
-
-def get_lag_values(year: int, month: int) -> tuple:
-    def get_rainfall_for(y, m):
-        if m < 1:
-            m += 12
-            y -= 1
-        row = nasa_df[(nasa_df["year"] == y) & (nasa_df["month"] == m)]
-        if len(row) > 0:
-            return float(row["rainfall_mm"].iloc[0])
-        return float(nasa_df[nasa_df["month"] == m]["rainfall_mm"].mean())
-    return (
-        get_rainfall_for(year, month - 1),
-        get_rainfall_for(year, month - 2),
-        get_rainfall_for(year, month - 3)
-    )
-
-
-def build_feature_vector(year: int, month: int) -> np.ndarray:
-    climate = get_monthly_climate_averages(month)
-    lag1, lag2, lag3 = get_lag_values(year, month)
-    return np.array([[
-        climate["temp_mean_C"], climate["temp_max_C"], climate["temp_min_C"],
-        climate["humidity_pct"], climate["pressure_kPa"], climate["wind_speed_ms"],
-        month, year, lag1, lag2, lag3
-    ]])
-
-
-def predict_with_model(model, X: np.ndarray) -> float:
-    raw = model.predict(X)
-    pred = float(np.array(raw).flatten()[0])
-    return max(0.0, round(pred, 1))
+PRIMARY_MODEL_KEY = "xgboost"
+PRIMARY_MODEL_NAME = "XGBoost (multivariate)"
 
 
 def categorize_rainfall(mm: float) -> str:
@@ -150,7 +86,7 @@ def get_advisory(category: str) -> str:
 def get_rainfall_probability(predicted_mm: float) -> float:
     """Expresses predicted rainfall as a percentage of the all-time highest
     monthly rainfall ever recorded in the Tarkwa dataset (573.9mm, October 2024).
-    Example: 69.9mm predicted → (69.9 / 573.9) × 100 = 12.2%"""
+    Example: 69.9mm predicted -> (69.9 / 573.9) x 100 = 12.2%"""
     percentage = (predicted_mm / ALL_TIME_MAX_RAINFALL_MM) * 100
     return round(min(percentage, 100.0), 1)
 
@@ -189,16 +125,12 @@ class PredictionRequest(BaseModel):
 def root():
     return {
         "app": "Droplet AI",
-        "version": "2.0",
+        "version": "3.0",
         "dataset": "NASA POWER (1990-2026)",
         "status": "running",
-        "models_loaded": {
-            "gbr": gbr_model is not None,
-            "lgbm": lgbm_model is not None,
-            "xgboost": xgb_model is not None,
-            "random_forest": rf_model is not None,
-        },
-        "default_model": "GBR (Gradient Boosting Regressor)",
+        "forecast_range": f"{FORECAST_DATA['forecast_start']} to {FORECAST_DATA['forecast_end']}" if FORECAST_DATA else None,
+        "models_available": ["xgboost", "gam", "sarimax", "lstm"],
+        "default_model": PRIMARY_MODEL_NAME,
     }
 
 
@@ -206,19 +138,20 @@ def root():
 def predict(request: PredictionRequest):
     if request.month < 1 or request.month > 12:
         return {"error": "Month must be between 1 and 12"}
-    if gbr_model is None:
-        return {"error": "GBR model is not available"}
 
-    X = build_feature_vector(request.year, request.month)
-    predicted_mm = predict_with_model(gbr_model, X)
+    key = (request.year, request.month)
+    if key not in FORECASTS_BY_KEY:
+        return {"error": f"Date out of forecast range ({FORECAST_DATA['forecast_start']} to {FORECAST_DATA['forecast_end']})"}
+
+    entry = FORECASTS_BY_KEY[key]
+    predicted_mm = entry[PRIMARY_MODEL_KEY]
     category = categorize_rainfall(predicted_mm)
     advisory = get_advisory(category)
     probability = get_rainfall_probability(predicted_mm)
     hist = get_historical_stats(request.month)
-    climate = get_monthly_climate_averages(request.month)
 
     return {
-        "model": "GBR",
+        "model": PRIMARY_MODEL_NAME,
         "year": request.year,
         "month": request.month,
         "month_name": MONTH_NAMES[request.month],
@@ -229,14 +162,6 @@ def predict(request: PredictionRequest):
         "historical_avg_mm": hist["mean_mm"],
         "historical_min_mm": hist["min_mm"],
         "historical_max_mm": hist["max_mm"],
-        "climate_inputs": {
-            "humidity_pct": round(climate["humidity_pct"], 1),
-            "temp_mean_C": round(climate["temp_mean_C"], 1),
-            "temp_max_C": round(climate["temp_max_C"], 1),
-            "temp_min_C": round(climate["temp_min_C"], 1),
-            "pressure_kPa": round(climate["pressure_kPa"], 1),
-            "wind_speed_ms": round(climate["wind_speed_ms"], 2),
-        }
     }
 
 
@@ -245,44 +170,35 @@ def compare(request: PredictionRequest):
     if request.month < 1 or request.month > 12:
         return {"error": "Month must be between 1 and 12"}
 
-    X = build_feature_vector(request.year, request.month)
+    key = (request.year, request.month)
+    if key not in FORECASTS_BY_KEY:
+        return {"error": f"Date out of forecast range ({FORECAST_DATA['forecast_start']} to {FORECAST_DATA['forecast_end']})"}
+
+    entry = FORECASTS_BY_KEY[key]
     hist = get_historical_stats(request.month)
-    climate = get_monthly_climate_averages(request.month)
 
-    models = {
-        "gbr": gbr_model,
-        "lgbm": lgbm_model,
-        "xgboost": xgb_model,
-        "random_forest": rf_model,
-    }
-
+    model_keys = ["xgboost", "gam", "sarimax", "lstm"]
     results = {}
     categories = []
 
-    for key, model in models.items():
-        if model is None:
-            results[key] = {"error": "Model not available"}
-            continue
-        try:
-            mm = predict_with_model(model, X)
-            cat = categorize_rainfall(mm)
-            prob = get_rainfall_probability(mm)
-            results[key] = {
-                "predicted_rainfall_mm": mm,
-                "rainfall_probability_pct": prob,
-                "category": cat,
-                "advisory": get_advisory(cat),
-            }
-            categories.append(cat)
-        except Exception as e:
-            results[key] = {"error": str(e)}
+    for key_name in model_keys:
+        mm = entry[key_name]
+        cat = categorize_rainfall(mm)
+        prob = get_rainfall_probability(mm)
+        results[key_name] = {
+            "predicted_rainfall_mm": mm,
+            "rainfall_probability_pct": prob,
+            "category": cat,
+            "advisory": get_advisory(cat),
+        }
+        categories.append(cat)
 
     most_common_cat = max(set(categories), key=categories.count) if categories else None
     agreement_count = categories.count(most_common_cat) if most_common_cat else 0
     agreement_pct = round(agreement_count / len(categories) * 100) if categories else 0
 
-    gbr_mm = results.get("gbr", {}).get("predicted_rainfall_mm", 0) or 0
-    overall_probability = get_rainfall_probability(gbr_mm)
+    primary_mm = results.get(PRIMARY_MODEL_KEY, {}).get("predicted_rainfall_mm", 0) or 0
+    overall_probability = get_rainfall_probability(primary_mm)
 
     return {
         "year": request.year,
@@ -297,14 +213,6 @@ def compare(request: PredictionRequest):
             "total_models": len(categories),
         },
         "historical": hist,
-        "climate_inputs": {
-            "humidity_pct": round(climate["humidity_pct"], 1),
-            "temp_mean_C": round(climate["temp_mean_C"], 1),
-            "temp_max_C": round(climate["temp_max_C"], 1),
-            "temp_min_C": round(climate["temp_min_C"], 1),
-            "pressure_kPa": round(climate["pressure_kPa"], 1),
-            "wind_speed_ms": round(climate["wind_speed_ms"], 2),
-        }
     }
 
 
@@ -319,3 +227,15 @@ def historical(month: int):
         return {"error": "Month must be between 1 and 12"}
     hist = get_historical_stats(month)
     return {"month": month, "month_name": MONTH_NAMES[month], **hist}
+
+
+@app.get("/forecast/all")
+def forecast_all():
+    """Full 60-month primary-model (XGBoost) forecast series, 2026-2030 -- for frontend charts."""
+    if not FORECAST_DATA:
+        return {"error": "Forecast data not loaded"}
+    return [
+        {"date": entry["date"], "year": entry["year"], "month": entry["month"],
+         "rainfall_mm": entry[PRIMARY_MODEL_KEY]}
+        for entry in FORECAST_DATA["forecasts"]
+    ]
