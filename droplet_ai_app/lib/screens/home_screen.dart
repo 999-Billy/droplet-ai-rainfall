@@ -15,6 +15,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  static const int _minYear = 2026;
+  static const int _maxYear = 2030;
+
   Map<String, dynamic>? _prediction;
   List<dynamic>? _seasonalProfile;
   bool _isLoading = true;
@@ -56,6 +59,16 @@ class _HomeScreenState extends State<HomeScreen> {
     if (targetMonth > 12) {
       targetMonth = 1;
       targetYear += 1;
+    }
+
+    // Clamp to the forecast range (Jan 2026 - Dec 2030) in case today's
+    // date falls outside it (e.g. before the app was deployed, or after 2030).
+    if (targetYear < _minYear) {
+      targetYear = _minYear;
+      targetMonth = 1;
+    } else if (targetYear > _maxYear) {
+      targetYear = _maxYear;
+      targetMonth = 12;
     }
 
     try {

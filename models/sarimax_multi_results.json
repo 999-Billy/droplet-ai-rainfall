@@ -1,0 +1,9 @@
+{
+  "model": "SARIMAX",
+  "mode": "multivariate",
+  "mae": 52.83,
+  "rmse": 73.43,
+  "r2": 0.6134,
+  "mape": 36.68,
+  "order": "(1,0,0)(2,0,0)[12]"
+}

@@ -1,0 +1,8 @@
+{
+  "model": "XGBoost",
+  "mode": "univariate",
+  "mae": 67.8,
+  "rmse": 92.13,
+  "r2": 0.3914,
+  "mape": 54.87
+}

@@ -1,0 +1,23 @@
+{
+  "model": "LSTM",
+  "mode": "multivariate",
+  "mae": 64.09,
+  "rmse": 90.18,
+  "r2": 0.4169,
+  "mape": 44.06,
+  "lookback": 12,
+  "features": [
+    "rainfall_mm",
+    "temp_mean_C",
+    "temp_max_C",
+    "temp_min_C",
+    "humidity_pct",
+    "pressure_kPa",
+    "wind_speed_ms",
+    "month_sin",
+    "month_cos",
+    "rainfall_lag1",
+    "rainfall_lag2",
+    "rainfall_roll3"
+  ]
+}

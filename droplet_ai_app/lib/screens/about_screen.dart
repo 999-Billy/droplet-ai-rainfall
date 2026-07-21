@@ -83,17 +83,22 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: 12),
             _bodyText(
               theme,
-              "A web-based rainfall prediction system for Tarkwa, Ghana, combining "
-              "four machine learning models trained on NASA POWER satellite-derived "
-              "meteorological data. Built to support agriculture, mining operations, "
-              "environmental management, and disaster preparedness in the Western Region.",
+              "A web-based rainfall forecasting system for Tarkwa, Ghana, combining "
+              "four statistical and machine learning models trained on NASA POWER "
+              "satellite-derived meteorological data. Built to support agriculture, "
+              "mining operations, environmental management, and disaster preparedness "
+              "in the Western Region.",
             ),
             const SizedBox(height: 12),
             _bodyText(
               theme,
-              "Forecasts are based on NASA POWER daily observations (1990–2026), aggregated "
-              "to monthly totals and averages. Six meteorological variables are used as "
-              "predictors: temperature, humidity, atmospheric pressure, and wind speed.",
+              "The app forecasts monthly rainfall from January 2026 through December "
+              "2030. Each model was trained in two forms: a univariate version using "
+              "only rainfall history, and a multivariate version additionally using "
+              "temperature, humidity, atmospheric pressure, wind speed, and seasonal "
+              "and lagged rainfall features. The deployed app uses the multivariate "
+              "models; the univariate versions are documented in the accompanying "
+              "thesis for comparison.",
             ),
           ],
         ),
@@ -117,7 +122,7 @@ class AboutScreen extends StatelessWidget {
             ),
             _bodyText(
               theme,
-              "The large percentage shown on each forecast (e.g. 12.2%) represents "
+              "The large percentage shown on each forecast (e.g. 41.8%) represents "
               "the predicted rainfall as a proportion of the highest monthly rainfall "
               "ever recorded in the Tarkwa dataset — 573.9mm in October 2024.\n\n"
               "Formula: Predicted mm ÷ 573.9mm × 100\n\n"
@@ -135,39 +140,40 @@ class AboutScreen extends StatelessWidget {
   Widget _buildModelsCard(ThemeData theme) {
     final models = [
       {
-        "name": "GBR",
-        "full": "Gradient Boosting Regressor",
+        "name": "XGBoost",
+        "full": "Extreme Gradient Boosting (multivariate)",
         "desc":
-            "sklearn's implementation of stage-wise additive gradient boosting. "
-            "The best-performing model in this study (R² 0.7140). Used as the "
+            "Scalable gradient-boosted trees with built-in regularization. "
+            "The best-performing model in this study (R² 0.7369). Used as the "
             "default model for all predictions.",
         "isDefault": true,
       },
       {
-        "name": "LightGBM",
-        "full": "Light Gradient Boosting Machine",
+        "name": "GAM",
+        "full": "Generalized Additive Model (multivariate)",
         "desc":
-            "Microsoft's efficient gradient boosting implementation using "
-            "leaf-wise tree growth. Second-best performer (R² 0.6891). "
-            "Handles right-skewed rainfall distributions effectively.",
+            "Fits smooth, flexible functions to each predictor rather than a "
+            "single linear relationship. Second-best performer (R² 0.6305), "
+            "and the most interpretable of the four models.",
         "isDefault": false,
       },
       {
-        "name": "XGBoost",
-        "full": "Extreme Gradient Boosting",
+        "name": "SARIMAX",
+        "full": "Seasonal ARIMA with Exogenous Variables (multivariate)",
         "desc":
-            "Scalable gradient boosting with built-in regularization to prevent "
-            "overfitting. Third-best performer (R² 0.6608). Provides interpretable "
-            "feature importances showing which variables drove each prediction.",
+            "A classical statistical time-series model that captures trend "
+            "and seasonality directly, extended here with climate variables "
+            "as exogenous regressors. Third performer (R² 0.6134).",
         "isDefault": false,
       },
       {
-        "name": "Random Forest",
-        "full": "Random Forest Regressor",
+        "name": "LSTM",
+        "full": "Long Short-Term Memory Network (multivariate)",
         "desc":
-            "An ensemble of independently built decision trees, averaged for "
-            "robustness. Fourth performer (R² 0.6414). More resistant to outliers "
-            "than gradient boosting methods.",
+            "A recurrent neural network designed to learn patterns across "
+            "sequences of past months. Fourth performer (R² 0.4169) — deep "
+            "learning models typically need more training data than was "
+            "available here (~348 months) to outperform simpler methods.",
         "isDefault": false,
       },
     ];
@@ -229,26 +235,32 @@ class AboutScreen extends StatelessWidget {
 
   Widget _buildPerformanceCard(ThemeData theme) {
     final models = [
-      (name: "GBR", rmse: "63.15", mae: "45.67", r2: "0.7140", isDefault: true),
-      (
-        name: "LightGBM",
-        rmse: "65.85",
-        mae: "47.18",
-        r2: "0.6891",
-        isDefault: false,
-      ),
       (
         name: "XGBoost",
-        rmse: "68.78",
-        mae: "50.84",
-        r2: "0.6608",
+        rmse: "60.58",
+        mae: "45.45",
+        r2: "0.7369",
+        isDefault: true,
+      ),
+      (
+        name: "GAM",
+        rmse: "71.79",
+        mae: "54.50",
+        r2: "0.6305",
         isDefault: false,
       ),
       (
-        name: "Random Forest",
-        rmse: "70.72",
-        mae: "51.72",
-        r2: "0.6414",
+        name: "SARIMAX",
+        rmse: "73.43",
+        mae: "52.83",
+        r2: "0.6134",
+        isDefault: false,
+      ),
+      (
+        name: "LSTM",
+        rmse: "90.18",
+        mae: "64.09",
+        r2: "0.4169",
         isDefault: false,
       ),
     ];
@@ -265,7 +277,7 @@ class AboutScreen extends StatelessWidget {
           children: [
             _sectionTitle(theme, "Model Performance"),
             Text(
-              "Evaluated on test period Jan 2019 – Jun 2026 (90 months)",
+              "Evaluated on chronological test period Jan 2019 – Jun 2026, multivariate models",
               style: GoogleFonts.manrope(
                 fontSize: 11,
                 color: theme.textTheme.bodySmall?.color?.withValues(
@@ -402,7 +414,9 @@ class AboutScreen extends StatelessWidget {
             ],
             const SizedBox(height: 8),
             Text(
-              "RMSE and MAE in mm. R² closer to 1.0 = better fit.",
+              "RMSE and MAE in mm. R² closer to 1.0 = better fit. Univariate "
+              "counterparts of all four models were also trained and are "
+              "documented in the thesis for comparison, but are not used in the app.",
               style: GoogleFonts.manrope(
                 fontSize: 10,
                 color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
@@ -486,12 +500,14 @@ class AboutScreen extends StatelessWidget {
             ),
             _bodyText(
               theme,
-              "• Forecasts are based on NASA POWER satellite-derived data (1990–2026), "
-              "not live meteorological station observations. Predictions use historical "
-              "monthly averages as model inputs for future dates.\n\n"
-              "• All four models use recursive lag features — their predictions for "
-              "future dates are influenced by recent recorded rainfall, which may not "
-              "fully capture abrupt climate shifts.\n\n"
+              "• Forecasts for 2026–2030 rely on historical monthly climatological "
+              "averages for temperature, humidity, pressure, and wind speed, since "
+              "actual future values for these variables cannot be observed. This is "
+              "a standard approach in applied forecasting but means the models do "
+              "not account for any future deviation from typical seasonal patterns.\n\n"
+              "• All four models forecast recursively — each month's prediction feeds "
+              "into the next month's lag features, so forecast uncertainty compounds "
+              "the further out the forecast extends toward 2030.\n\n"
               "• Monthly aggregation smooths daily rainfall variability — the system "
               "predicts monthly totals, not daily or weekly events.\n\n"
               "• The system is calibrated on Tarkwa-specific data and is not intended "

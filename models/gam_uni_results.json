@@ -1,0 +1,8 @@
+{
+  "model": "GAM",
+  "mode": "univariate",
+  "mae": 61.88,
+  "rmse": 79.32,
+  "r2": 0.5489,
+  "mape": 72.41
+}

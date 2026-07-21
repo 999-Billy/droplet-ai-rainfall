@@ -1,0 +1,9 @@
+{
+  "model": "SARIMA",
+  "mode": "univariate",
+  "mae": 52.58,
+  "rmse": 71.92,
+  "r2": 0.6291,
+  "mape": 42.89,
+  "order": "(1,0,0)(1,0,1)[12]"
+}

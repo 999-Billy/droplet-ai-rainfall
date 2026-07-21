@@ -1,0 +1,547 @@
+{
+  "generated_from": "2026-06-01",
+  "forecast_start": "2026-01-01",
+  "forecast_end": "2030-12-01",
+  "forecasts": [
+    {
+      "date": "2026-01-01",
+      "year": 2026,
+      "month": 1,
+      "xgboost": 29.2,
+      "gam": 0.0,
+      "sarimax": 0.0,
+      "lstm": 107.3
+    },
+    {
+      "date": "2026-02-01",
+      "year": 2026,
+      "month": 2,
+      "xgboost": 58.4,
+      "gam": 0.0,
+      "sarimax": 9.3,
+      "lstm": 81.1
+    },
+    {
+      "date": "2026-03-01",
+      "year": 2026,
+      "month": 3,
+      "xgboost": 141.6,
+      "gam": 111.0,
+      "sarimax": 151.5,
+      "lstm": 129.3
+    },
+    {
+      "date": "2026-04-01",
+      "year": 2026,
+      "month": 4,
+      "xgboost": 174.1,
+      "gam": 199.1,
+      "sarimax": 183.4,
+      "lstm": 196.4
+    },
+    {
+      "date": "2026-05-01",
+      "year": 2026,
+      "month": 5,
+      "xgboost": 189.7,
+      "gam": 213.5,
+      "sarimax": 232.5,
+      "lstm": 169.7
+    },
+    {
+      "date": "2026-06-01",
+      "year": 2026,
+      "month": 6,
+      "xgboost": 237.4,
+      "gam": 238.0,
+      "sarimax": 221.8,
+      "lstm": 56.2
+    },
+    {
+      "date": "2026-07-01",
+      "year": 2026,
+      "month": 7,
+      "xgboost": 105.9,
+      "gam": 133.5,
+      "sarimax": 150.3,
+      "lstm": 28.2
+    },
+    {
+      "date": "2026-08-01",
+      "year": 2026,
+      "month": 8,
+      "xgboost": 79.3,
+      "gam": 71.4,
+      "sarimax": 100.4,
+      "lstm": 47.3
+    },
+    {
+      "date": "2026-09-01",
+      "year": 2026,
+      "month": 9,
+      "xgboost": 121.5,
+      "gam": 135.0,
+      "sarimax": 136.0,
+      "lstm": 111.2
+    },
+    {
+      "date": "2026-10-01",
+      "year": 2026,
+      "month": 10,
+      "xgboost": 180.9,
+      "gam": 190.2,
+      "sarimax": 178.9,
+      "lstm": 131.9
+    },
+    {
+      "date": "2026-11-01",
+      "year": 2026,
+      "month": 11,
+      "xgboost": 89.5,
+      "gam": 88.4,
+      "sarimax": 106.9,
+      "lstm": 116.1
+    },
+    {
+      "date": "2026-12-01",
+      "year": 2026,
+      "month": 12,
+      "xgboost": 46.6,
+      "gam": 35.5,
+      "sarimax": 42.7,
+      "lstm": 53.1
+    },
+    {
+      "date": "2027-01-01",
+      "year": 2027,
+      "month": 1,
+      "xgboost": 20.0,
+      "gam": 33.3,
+      "sarimax": 49.9,
+      "lstm": 32.2
+    },
+    {
+      "date": "2027-02-01",
+      "year": 2027,
+      "month": 2,
+      "xgboost": 72.9,
+      "gam": 71.5,
+      "sarimax": 74.7,
+      "lstm": 79.4
+    },
+    {
+      "date": "2027-03-01",
+      "year": 2027,
+      "month": 3,
+      "xgboost": 160.1,
+      "gam": 121.3,
+      "sarimax": 133.8,
+      "lstm": 142.5
+    },
+    {
+      "date": "2027-04-01",
+      "year": 2027,
+      "month": 4,
+      "xgboost": 177.6,
+      "gam": 143.4,
+      "sarimax": 167.0,
+      "lstm": 174.8
+    },
+    {
+      "date": "2027-05-01",
+      "year": 2027,
+      "month": 5,
+      "xgboost": 185.5,
+      "gam": 209.4,
+      "sarimax": 228.9,
+      "lstm": 228.6
+    },
+    {
+      "date": "2027-06-01",
+      "year": 2027,
+      "month": 6,
+      "xgboost": 239.7,
+      "gam": 248.6,
+      "sarimax": 210.8,
+      "lstm": 252.0
+    },
+    {
+      "date": "2027-07-01",
+      "year": 2027,
+      "month": 7,
+      "xgboost": 106.1,
+      "gam": 136.8,
+      "sarimax": 148.3,
+      "lstm": 100.3
+    },
+    {
+      "date": "2027-08-01",
+      "year": 2027,
+      "month": 8,
+      "xgboost": 79.1,
+      "gam": 69.6,
+      "sarimax": 106.9,
+      "lstm": 81.8
+    },
+    {
+      "date": "2027-09-01",
+      "year": 2027,
+      "month": 9,
+      "xgboost": 121.5,
+      "gam": 133.1,
+      "sarimax": 134.4,
+      "lstm": 128.4
+    },
+    {
+      "date": "2027-10-01",
+      "year": 2027,
+      "month": 10,
+      "xgboost": 180.9,
+      "gam": 191.2,
+      "sarimax": 175.8,
+      "lstm": 203.7
+    },
+    {
+      "date": "2027-11-01",
+      "year": 2027,
+      "month": 11,
+      "xgboost": 89.5,
+      "gam": 89.1,
+      "sarimax": 108.6,
+      "lstm": 101.4
+    },
+    {
+      "date": "2027-12-01",
+      "year": 2027,
+      "month": 12,
+      "xgboost": 46.6,
+      "gam": 35.3,
+      "sarimax": 44.9,
+      "lstm": 23.4
+    },
+    {
+      "date": "2028-01-01",
+      "year": 2028,
+      "month": 1,
+      "xgboost": 20.0,
+      "gam": 32.8,
+      "sarimax": 53.9,
+      "lstm": 32.4
+    },
+    {
+      "date": "2028-02-01",
+      "year": 2028,
+      "month": 2,
+      "xgboost": 72.9,
+      "gam": 71.6,
+      "sarimax": 64.6,
+      "lstm": 85.3
+    },
+    {
+      "date": "2028-03-01",
+      "year": 2028,
+      "month": 3,
+      "xgboost": 160.1,
+      "gam": 121.6,
+      "sarimax": 132.8,
+      "lstm": 145.2
+    },
+    {
+      "date": "2028-04-01",
+      "year": 2028,
+      "month": 4,
+      "xgboost": 177.6,
+      "gam": 143.4,
+      "sarimax": 173.6,
+      "lstm": 176.6
+    },
+    {
+      "date": "2028-05-01",
+      "year": 2028,
+      "month": 5,
+      "xgboost": 185.5,
+      "gam": 209.2,
+      "sarimax": 213.8,
+      "lstm": 231.5
+    },
+    {
+      "date": "2028-06-01",
+      "year": 2028,
+      "month": 6,
+      "xgboost": 239.7,
+      "gam": 248.6,
+      "sarimax": 205.4,
+      "lstm": 256.8
+    },
+    {
+      "date": "2028-07-01",
+      "year": 2028,
+      "month": 7,
+      "xgboost": 106.1,
+      "gam": 136.8,
+      "sarimax": 152.8,
+      "lstm": 100.7
+    },
+    {
+      "date": "2028-08-01",
+      "year": 2028,
+      "month": 8,
+      "xgboost": 79.1,
+      "gam": 69.6,
+      "sarimax": 112.6,
+      "lstm": 81.1
+    },
+    {
+      "date": "2028-09-01",
+      "year": 2028,
+      "month": 9,
+      "xgboost": 121.5,
+      "gam": 133.1,
+      "sarimax": 137.7,
+      "lstm": 126.4
+    },
+    {
+      "date": "2028-10-01",
+      "year": 2028,
+      "month": 10,
+      "xgboost": 180.9,
+      "gam": 191.2,
+      "sarimax": 163.8,
+      "lstm": 203.0
+    },
+    {
+      "date": "2028-11-01",
+      "year": 2028,
+      "month": 11,
+      "xgboost": 89.5,
+      "gam": 89.1,
+      "sarimax": 108.7,
+      "lstm": 98.2
+    },
+    {
+      "date": "2028-12-01",
+      "year": 2028,
+      "month": 12,
+      "xgboost": 46.6,
+      "gam": 35.3,
+      "sarimax": 48.9,
+      "lstm": 22.9
+    },
+    {
+      "date": "2029-01-01",
+      "year": 2029,
+      "month": 1,
+      "xgboost": 20.0,
+      "gam": 32.8,
+      "sarimax": 38.3,
+      "lstm": 32.4
+    },
+    {
+      "date": "2029-02-01",
+      "year": 2029,
+      "month": 2,
+      "xgboost": 72.9,
+      "gam": 71.6,
+      "sarimax": 62.6,
+      "lstm": 86.4
+    },
+    {
+      "date": "2029-03-01",
+      "year": 2029,
+      "month": 3,
+      "xgboost": 160.1,
+      "gam": 121.6,
+      "sarimax": 136.3,
+      "lstm": 145.4
+    },
+    {
+      "date": "2029-04-01",
+      "year": 2029,
+      "month": 4,
+      "xgboost": 177.6,
+      "gam": 143.4,
+      "sarimax": 176.2,
+      "lstm": 176.7
+    },
+    {
+      "date": "2029-05-01",
+      "year": 2029,
+      "month": 5,
+      "xgboost": 185.5,
+      "gam": 209.2,
+      "sarimax": 207.4,
+      "lstm": 231.6
+    },
+    {
+      "date": "2029-06-01",
+      "year": 2029,
+      "month": 6,
+      "xgboost": 239.7,
+      "gam": 248.6,
+      "sarimax": 200.9,
+      "lstm": 256.7
+    },
+    {
+      "date": "2029-07-01",
+      "year": 2029,
+      "month": 7,
+      "xgboost": 106.1,
+      "gam": 136.8,
+      "sarimax": 154.2,
+      "lstm": 100.6
+    },
+    {
+      "date": "2029-08-01",
+      "year": 2029,
+      "month": 8,
+      "xgboost": 79.1,
+      "gam": 69.6,
+      "sarimax": 115.5,
+      "lstm": 81.2
+    },
+    {
+      "date": "2029-09-01",
+      "year": 2029,
+      "month": 9,
+      "xgboost": 121.5,
+      "gam": 133.1,
+      "sarimax": 137.9,
+      "lstm": 126.6
+    },
+    {
+      "date": "2029-10-01",
+      "year": 2029,
+      "month": 10,
+      "xgboost": 180.9,
+      "gam": 191.2,
+      "sarimax": 160.3,
+      "lstm": 203.1
+    },
+    {
+      "date": "2029-11-01",
+      "year": 2029,
+      "month": 11,
+      "xgboost": 89.5,
+      "gam": 89.1,
+      "sarimax": 109.1,
+      "lstm": 97.9
+    },
+    {
+      "date": "2029-12-01",
+      "year": 2029,
+      "month": 12,
+      "xgboost": 46.6,
+      "gam": 35.3,
+      "sarimax": 50.3,
+      "lstm": 22.9
+    },
+    {
+      "date": "2030-01-01",
+      "year": 2030,
+      "month": 1,
+      "xgboost": 20.0,
+      "gam": 32.8,
+      "sarimax": 35.5,
+      "lstm": 32.4
+    },
+    {
+      "date": "2030-02-01",
+      "year": 2030,
+      "month": 2,
+      "xgboost": 72.9,
+      "gam": 71.6,
+      "sarimax": 60.3,
+      "lstm": 86.5
+    },
+    {
+      "date": "2030-03-01",
+      "year": 2030,
+      "month": 3,
+      "xgboost": 160.1,
+      "gam": 121.6,
+      "sarimax": 136.9,
+      "lstm": 145.4
+    },
+    {
+      "date": "2030-04-01",
+      "year": 2030,
+      "month": 4,
+      "xgboost": 177.6,
+      "gam": 143.4,
+      "sarimax": 178.0,
+      "lstm": 176.7
+    },
+    {
+      "date": "2030-05-01",
+      "year": 2030,
+      "month": 5,
+      "xgboost": 185.5,
+      "gam": 209.2,
+      "sarimax": 203.2,
+      "lstm": 231.6
+    },
+    {
+      "date": "2030-06-01",
+      "year": 2030,
+      "month": 6,
+      "xgboost": 239.7,
+      "gam": 248.6,
+      "sarimax": 198.8,
+      "lstm": 256.7
+    },
+    {
+      "date": "2030-07-01",
+      "year": 2030,
+      "month": 7,
+      "xgboost": 106.1,
+      "gam": 136.8,
+      "sarimax": 155.3,
+      "lstm": 100.6
+    },
+    {
+      "date": "2030-08-01",
+      "year": 2030,
+      "month": 8,
+      "xgboost": 79.1,
+      "gam": 69.6,
+      "sarimax": 117.3,
+      "lstm": 81.2
+    },
+    {
+      "date": "2030-09-01",
+      "year": 2030,
+      "month": 9,
+      "xgboost": 121.5,
+      "gam": 133.1,
+      "sarimax": 138.6,
+      "lstm": 126.6
+    },
+    {
+      "date": "2030-10-01",
+      "year": 2030,
+      "month": 10,
+      "xgboost": 180.9,
+      "gam": 191.2,
+      "sarimax": 157.3,
+      "lstm": 203.1
+    },
+    {
+      "date": "2030-11-01",
+      "year": 2030,
+      "month": 11,
+      "xgboost": 89.5,
+      "gam": 89.1,
+      "sarimax": 109.3,
+      "lstm": 97.9
+    },
+    {
+      "date": "2030-12-01",
+      "year": 2030,
+      "month": 12,
+      "xgboost": 46.6,
+      "gam": 35.3,
+      "sarimax": 51.3,
+      "lstm": 22.9
+    }
+  ]
+}

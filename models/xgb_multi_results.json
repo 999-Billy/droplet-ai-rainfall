@@ -1,0 +1,8 @@
+{
+  "model": "XGBoost",
+  "mode": "multivariate",
+  "mae": 45.45,
+  "rmse": 60.58,
+  "r2": 0.7369,
+  "mape": 30.32
+}

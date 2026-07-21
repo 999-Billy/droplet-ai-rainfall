@@ -1,0 +1,9 @@
+{
+  "model": "LSTM",
+  "mode": "univariate",
+  "mae": 78.91,
+  "rmse": 107.86,
+  "r2": 0.1658,
+  "mape": 54.95,
+  "lookback": 12
+}

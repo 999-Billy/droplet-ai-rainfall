@@ -29,16 +29,32 @@ class PredictScreen extends StatefulWidget {
 }
 
 class _PredictScreenState extends State<PredictScreen> {
-  int _selectedMonth = DateTime.now().month;
-  int _selectedYear = DateTime.now().year;
-  static const int _minYear = 2015;
-  static const int _maxYear = 2036;
+  static const int _minYear = 2026;
+  static const int _maxYear = 2030;
+
+  late int _selectedMonth;
+  late int _selectedYear;
 
   Map<String, dynamic>? _result;
   bool _isLoading = false;
   bool _showSlowLoadMessage = false;
   String? _errorMessage;
   Timer? _slowLoadTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Default to the current month/year if it falls in the forecast range,
+    // otherwise default to the start of the range.
+    final now = DateTime.now();
+    if (now.year >= _minYear && now.year <= _maxYear) {
+      _selectedYear = now.year;
+      _selectedMonth = now.month;
+    } else {
+      _selectedYear = _minYear;
+      _selectedMonth = 1;
+    }
+  }
 
   @override
   void dispose() {
@@ -135,7 +151,7 @@ class _PredictScreenState extends State<PredictScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            "Select a month and year to get a GBR rainfall forecast for Tarkwa",
+            "Select a month and year (2026–2030) to get an XGBoost rainfall forecast for Tarkwa",
             style: GoogleFonts.manrope(
               fontSize: 13,
               color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
@@ -200,8 +216,6 @@ class _PredictScreenState extends State<PredictScreen> {
             ),
             const SizedBox(height: 16),
             _buildHistoricalRangeCard(theme),
-            const SizedBox(height: 16),
-            _buildClimateStrip(theme),
           ],
         ],
       ),
@@ -399,132 +413,6 @@ class _PredictScreenState extends State<PredictScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildClimateStrip(ThemeData theme) {
-    final climate = _result!["climate_inputs"] as Map<String, dynamic>? ?? {};
-    final dividerColor =
-        theme.textTheme.bodySmall?.color?.withValues(alpha: 0.12) ??
-        Colors.grey.withValues(alpha: 0.12);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 12, bottom: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Climate Inputs Used",
-                    style: GoogleFonts.manrope(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    "Historical averages for ${_result!["month_name"] ?? ""} — NASA POWER (1990–2026)",
-                    style: GoogleFonts.manrope(
-                      fontSize: 10,
-                      color: theme.textTheme.bodySmall?.color?.withValues(
-                        alpha: 0.55,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: _climateColumn(
-                    theme,
-                    "${climate["humidity_pct"] ?? '--'}%",
-                    "Humidity",
-                  ),
-                ),
-                Container(width: 1, height: 40, color: dividerColor),
-                Expanded(
-                  child: _climateColumn(
-                    theme,
-                    "${climate["temp_mean_C"] ?? '--'}°C",
-                    "Avg Temp",
-                  ),
-                ),
-                Container(width: 1, height: 40, color: dividerColor),
-                Expanded(
-                  child: _climateColumn(
-                    theme,
-                    "${climate["temp_max_C"] ?? '--'}°C",
-                    "Max Temp",
-                  ),
-                ),
-              ],
-            ),
-            Divider(height: 16, color: dividerColor),
-            Row(
-              children: [
-                Expanded(
-                  child: _climateColumn(
-                    theme,
-                    "${climate["temp_min_C"] ?? '--'}°C",
-                    "Min Temp",
-                  ),
-                ),
-                Container(width: 1, height: 40, color: dividerColor),
-                Expanded(
-                  child: _climateColumn(
-                    theme,
-                    "${climate["pressure_kPa"] ?? '--'} kPa",
-                    "Pressure",
-                  ),
-                ),
-                Container(width: 1, height: 40, color: dividerColor),
-                Expanded(
-                  child: _climateColumn(
-                    theme,
-                    "${climate["wind_speed_ms"] ?? '--'} m/s",
-                    "Wind",
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _climateColumn(ThemeData theme, String value, String label) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          value,
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.manrope(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: theme.textTheme.titleMedium?.color,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: GoogleFonts.manrope(
-            fontSize: 10,
-            letterSpacing: 0.3,
-            color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.55),
-          ),
-        ),
-      ],
     );
   }
 }
